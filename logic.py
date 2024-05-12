@@ -4,13 +4,16 @@ import csv
 
 
 class Logic(QMainWindow, Ui_MainWindow):
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        method for the ATM/bank
+        """
         super().__init__()
         self.setupUi(self)
         self.special_characters = "~`!@#$%^&*()_+={[}]| :;" + "'" + '"' + '<,>.?' + "\\" + "/"
 
         self.stackedWidget.setCurrentWidget(self.screen_login)
-
+        self.label_value_handling.clear()
         self.button_login.clicked.connect(lambda: self.login())
         self.button_create_account.clicked.connect(lambda: self.create_account_page())
         self.button_confirm_account.clicked.connect(lambda: self.create_account())
@@ -19,12 +22,16 @@ class Logic(QMainWindow, Ui_MainWindow):
         self.button_confirm_amount.clicked.connect(lambda: self.confirm_amount())
         self.button_clear.clicked.connect(lambda: self.clear_atm())
 
-    def login(self):
+    def login(self) -> None:
+        """
+        method that checks for valid/invalid logins
+        """
         try:
+            self.label_value_handling.clear()
             self.clear_atm()
-            self.first_name = self.input_first_name.text()
-            self.last_name = self.input_last_name.text()
-            self.password = self.input_password.text()
+            self.first_name = self.input_first_name.text().strip()
+            self.last_name = self.input_last_name.text().strip()
+            self.password = self.input_password.text().strip()
 
             self.account_details = [self.first_name, self.last_name, self.password]
 
@@ -58,12 +65,15 @@ class Logic(QMainWindow, Ui_MainWindow):
             self.input_last_name.clear()
             self.input_password.clear()
 
-    def create_account(self):
+    def create_account(self) -> None:
+        """
+        method that deals with valid and invalid account creations
+        """
         try:
-            self.first_name = self.input_first_name_create.text()
-            self.last_name = self.input_last_name_create.text()
-            self.password = self.input_password_create.text()
-            self.confirm_password = self.input_password_create_2.text()
+            self.first_name = self.input_first_name_create.text().strip()
+            self.last_name = self.input_last_name_create.text().strip()
+            self.password = self.input_password_create.text().strip()
+            self.confirm_password = self.input_password_create_2.text().strip()
 
             self.account_details = [self.first_name, self.last_name, self.password, self.confirm_password]
 
@@ -122,9 +132,12 @@ class Logic(QMainWindow, Ui_MainWindow):
         except TypeError as e:
             self.label_confirm_output.setText(f'{e}')
 
-    def confirm_amount(self):
+    def confirm_amount(self) -> None:
+        """
+        method that confirms the withdrawal and deposit amount, also deals with invalid data
+        """
         try:
-            self.amount = self.input_amount.text()
+            self.amount = self.input_amount.text().strip()
             self.amount = float(self.amount)
             if self.amount <= 0:
                 raise ValueError
@@ -137,17 +150,25 @@ class Logic(QMainWindow, Ui_MainWindow):
             self.label_value_handling.setText('Entry must be numeric (e.g. 10.25 not $10.25) and not less than 0.')
         except TypeError as e:
             self.label_value_handling.setText(f'{e}')
-        except Exception as e:
-            print(e)
 
 
-    def login_page(self):
+    def login_page(self) -> None:
+        """
+        method that changes the screen to the login page
+        """
         self.stackedWidget.setCurrentWidget(self.screen_login)
 
-    def create_account_page(self):
+    def create_account_page(self) -> None:
+        """
+        method that changes the screen to the create account page
+        """
         self.stackedWidget.setCurrentWidget(self.screen_create_account)
 
-    def get_total_balance(self):
+    def get_total_balance(self) -> float:
+        """
+        method that sums up all the withdrawals and deposits
+        :return: the overall account balance
+        """
         self.total_balance = 0
         with open(f'{self.first_name}_{self.last_name}.csv', 'r') as csv_balance_file:
             csv_reader = csv.reader(csv_balance_file)
@@ -156,14 +177,22 @@ class Logic(QMainWindow, Ui_MainWindow):
                 self.total_balance += amount
         return self.total_balance
 
-    def deposit(self, amount):
+    def deposit(self, amount) -> None:
+        """
+        method that writes the deposited amount to a csv file and refreshes the ATM page
+        :param amount: how much money that is being put into the deposit
+        """
         with open(f'{self.first_name}_{self.last_name}.csv', 'a+', newline='') as csv_balance_file:
             csv_writer = csv.writer(csv_balance_file)
             amount = str(amount)
             csv_writer.writerow([str(self.modify_modification_number()), 'deposited', amount])
         self.atm_page()
 
-    def withdraw(self, amount):
+    def withdraw(self, amount) -> None:
+        """
+        method that checks for invalid withdrawals and writes it to a csv file and refreshes the ATM page
+        :param amount: how much money is within the withdrawal
+        """
         if amount > self.get_total_balance():
             raise TypeError('Cannot withdraw more than account balance.')
         else:
@@ -173,7 +202,11 @@ class Logic(QMainWindow, Ui_MainWindow):
                 csv_writer.writerow([str(self.modify_modification_number()), 'withdrew', amount])
         self.atm_page()
 
-    def modify_modification_number(self):
+    def modify_modification_number(self) -> int:
+        """
+        method that records how many deposits/withdrawals have been made
+        :return: returns the most recent number of modifications
+        """
         self.modification_number = 1
         with open(f'{self.first_name}_{self.last_name}.csv', 'r') as csv_balance_file:
             csv_reader = csv.reader(csv_balance_file)
@@ -182,7 +215,10 @@ class Logic(QMainWindow, Ui_MainWindow):
             self.modification_number += modification_number
         return self.modification_number
 
-    def atm_page(self):
+    def atm_page(self) -> None:
+        """
+        method that reads from the csv file to update the account history
+        """
         self.label_welcome.setText(f'Welcome, {self.first_name}')
         self.account_history = ''
         with open(f'{self.first_name}_{self.last_name}.csv', 'a+') as csv_balance_file:
@@ -198,9 +234,13 @@ class Logic(QMainWindow, Ui_MainWindow):
 
         self.stackedWidget.setCurrentWidget(self.screen_ATM)
 
-    def clear_atm(self):
+    def clear_atm(self) -> None:
+        """
+        method that clears all radio buttons
+        """
         self.buttonGroup.setExclusive(False)
         self.radioButton_withdraw.setChecked(False)
         self.radioButton_deposit.setChecked(False)
         self.buttonGroup.setExclusive(True)
         self.input_amount.clear()
+        self.label_value_handling.clear()
